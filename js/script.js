@@ -45,6 +45,11 @@ mtlLoader.load('models/fixed-scene.mtl', function ( materials ){
 		var objLoader = new THREE.OBJLoader();
 		objLoader.setMaterials(materials);
 		objLoader.load('models/fixed-scene.obj', function ( mesh ){
+				mesh.traverse( function ( child ) {
+		        	if ( child instanceof THREE.Mesh ) {
+		        		child.material.flatShading = true;
+		            }
+		        });
 				mesh.receiveShadow = true;
 				mesh.castShadow = true;
 				scene.add( mesh );
@@ -220,7 +225,13 @@ function create3DFish(phenotype){
 	fishLoader.load('models/fish-body.obj', function ( mesh ){
 			mesh.traverse( function ( child ) {
             	if ( child instanceof THREE.Mesh ) {
-                	child.material.color.setHex(colors[phenotype[3]]);
+                	//child.material.color.setHex(colors[phenotype[3]]);
+                	child.material = new THREE.MeshPhongMaterial({
+                		color: colors[phenotype[3]],
+                		flatShading: true,
+                		shininess: 200,
+                		specular: colors[phenotype[3]]
+                	});
                 }
             });
 			mesh.receiveShadow = true;
@@ -241,7 +252,13 @@ function create3DFish(phenotype){
 	fishLoader.load('models/dorsal-fin.obj', function ( mesh ){
 			mesh.traverse( function ( child ) {
             	if ( child instanceof THREE.Mesh ) {
-                	child.material.color.setHex(colors[phenotype[10]]);
+                	//child.material.color.setHex(colors[phenotype[10]]);
+                	child.material = new THREE.MeshPhongMaterial({
+                		color: colors[phenotype[10]],
+                		flatShading: true,
+                		shininess: 200,
+                		specular: colors[phenotype[10]]
+                	});
                 }
             });
 			mesh.receiveShadow = true;
@@ -255,7 +272,13 @@ function create3DFish(phenotype){
 	fishLoader.load('models/caudal-fin.obj', function ( mesh ){
 			mesh.traverse( function ( child ) {
             	if ( child instanceof THREE.Mesh ) {
-                	child.material.color.setHex(colors[phenotype[10]]);
+                	//child.material.color.setHex(colors[phenotype[10]]);
+                	child.material = new THREE.MeshPhongMaterial({
+                		color: colors[phenotype[10]],
+                		flatShading: true,
+                		shininess: 200,
+                		specular: colors[phenotype[10]]
+                	});
                 }
             });
 			mesh.receiveShadow = true;
@@ -269,7 +292,13 @@ function create3DFish(phenotype){
 	fishLoader.load('models/pectoral-fin.obj', function ( mesh ){
 			mesh.traverse( function ( child ) {
             	if ( child instanceof THREE.Mesh ) {
-                	child.material.color.setHex(colors[phenotype[10]]);
+                	//child.material.color.setHex(colors[phenotype[10]]);
+                	child.material = new THREE.MeshPhongMaterial({
+                		color: colors[phenotype[10]],
+                		flatShading: true,
+                		shininess: 200,
+                		specular: colors[phenotype[10]]
+                	});
                 }
             });
 			mesh.receiveShadow = true;
@@ -283,7 +312,13 @@ function create3DFish(phenotype){
 	fishLoader.load('models/pectoral-fin.obj', function ( mesh ){
 			mesh.traverse( function ( child ) {
             	if ( child instanceof THREE.Mesh ) {
-                	child.material.color.setHex(colors[phenotype[10]]);
+                	//child.material.color.setHex(colors[phenotype[10]]);
+                	child.material = new THREE.MeshPhongMaterial({
+                		color: colors[phenotype[10]],
+                		flatShading: true,
+                		shininess: 200,
+                		specular: colors[phenotype[10]]
+                	});
                 }
             });
 			mesh.receiveShadow = true;
