@@ -5,7 +5,8 @@ const colorPalette = {
     containerBox: 0xffffff,
     ambientLight: 0x666666,
     directionalLight: 0xb4f5f0,
-    spotLight: 0x2ceef0
+    spotLight: 0x2ceef0,
+    seaweed: 0x1ea055
 }
 
 // BUGS WHEN DISPLAYING FISHES :'(
@@ -36,13 +37,11 @@ nChilds.open();
 
 gui.add(options, 'Generate');
 
-//let fishesMeshGroup = new THREE.Group();
-
 // load fixed scene obj and mtl
 let mtlLoader = new THREE.MTLLoader();
 mtlLoader.load('models/fixed-scene.mtl', function ( materials ){
 		materials.preload();
-		var objLoader = new THREE.OBJLoader();
+		let objLoader = new THREE.OBJLoader();
 		objLoader.setMaterials(materials);
 		objLoader.load('models/fixed-scene.obj', function ( mesh ){
 				mesh.traverse( function ( child ) {
@@ -52,18 +51,26 @@ mtlLoader.load('models/fixed-scene.mtl', function ( materials ){
 		        });
 				mesh.receiveShadow = true;
 				mesh.castShadow = true;
-				scene.add( mesh );
-				mesh.position.set(10, -40, -200);
+				scene.add(mesh);
+				mesh.position.set(10, -40, -100);
 				mesh.rotation.set(0, -Math.PI / 2, 0);
 			}
 		);
 	}
 );
 
+// load animated seaweeds
+let seaweedMeshes = [];
+let mixers = [];
+let clock = new THREE.Clock; 
+let jsonLoader = new THREE.JDLoader();
+
+loadSeaweed(130, -35, -40, 0, Math.PI/2, 0);
+loadSeaweed(-100, -45, 0, 0, -Math.PI/3, 0);
+
 const render = () => {
     controls.update();
     renderer.render( scene, camera );
-    //requestAnimationFrame(render);
 }
 
 const onResize = () => {
@@ -74,12 +81,16 @@ const onResize = () => {
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
 }
-
+let iMixer = 0;
 let update = function ()
 {
 	// game logic
-	// BOIDS ANIMATION HERE
-	//boid.update();
+	//boids.update();
+
+	let delta = clock.getDelta();
+	for (let i = 0; i < mixers.length; ++i) {
+    	mixers[i].update(delta);
+	}	
 };
 
 let GameLoop = function () {
@@ -220,7 +231,6 @@ function create3DFish(phenotype){
 	let center = new THREE.Vector3(); // center point of the box
 	let max = new THREE.Vector3();
 	let min = new THREE.Vector3();
-	console.log("SIZE BOX FISH", size);
 
 	fishLoader.load('models/fish-body.obj', function ( mesh ){
 			mesh.traverse( function ( child ) {
@@ -244,10 +254,10 @@ function create3DFish(phenotype){
 		}
 	);
 
-	if (size.x < 10) {
+	/*if (size.x < 10) {
 		size.x = 30;
 		console.log('INF 10');
-	}
+	}*/
 
 	fishLoader.load('models/dorsal-fin.obj', function ( mesh ){
 			mesh.traverse( function ( child ) {
@@ -471,10 +481,6 @@ renderer.shadowMap.type = THREE.BasicShadowMap;
 renderer.setClearColor ( colorPalette.screenBg, 1 );
 document.body.appendChild(renderer.domElement);
 
-/* decors
--------------------------------------------------------------*/
-//scene.add( fixedDecorsObj.mesh );
-
 /* AmbientLight
 -------------------------------------------------------------*/
 var ambientLight = new THREE.AmbientLight( colorPalette.ambientLight, 1.0 );
@@ -598,4 +604,49 @@ function createAndDisplayFishes() {
 			posX += 100;
 		}
 	} while (nGen < options.nMaxGens);
+}
+
+/* decors functions
+-------------------------------------------------------------*/
+function addSeaweedToScene(mesh, posX, posY, posZ, rotX, rotY, rotZ, scaX, scaY, scaZ) {
+	let object = new THREE.Group();
+	object.add(mesh);
+	scene.add(object);
+	object.position.set(posX, posY, posZ);
+	object.rotation.set(rotX, rotY, rotZ);
+	object.scale.set(scaX, scaY, scaZ);
+	return object;
+}
+
+function loadSeaweed(posX, posY, posZ, rotX, rotY, rotZ) {
+	jsonLoader.load("models/seaweed1.JD", function (data) {                            
+	    for (let i = 0; i < data.objects.length; ++i)
+	    {
+	        if (data.objects[i].type == "Mesh")
+	        {
+	            let mesh = null;
+	            let matArray = new THREE.MeshPhongMaterial({
+		    		color: colorPalette.seaweed,
+		    		flatShading: true,
+		    		shininess: 200,
+		    		specular: colorPalette.seaweed
+		    	});
+
+	            mesh = new THREE.Mesh(data.objects[i].geometry, matArray);
+	            let object = new THREE.Group();
+				object.add(mesh);
+				scene.add(object);
+				object.position.set(posX, posY, posZ);
+				object.rotation.set(rotX, rotY, rotZ);
+				seaweedMeshes.push(object);
+
+	            if (mesh && mesh.geometry.animations) {
+	                let mixer = new THREE.AnimationMixer(mesh);
+	                mixers.push(mixer);
+	                let action = mixer.clipAction( mesh.geometry.animations[0] );
+	                action.play();
+	            }
+	        }
+	    }        
+	});
 }
