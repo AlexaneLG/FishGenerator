@@ -9,7 +9,6 @@ const colorPalette = {
     seaweed: 0x1ea055
 }
 
-// BUGS WHEN DISPLAYING FISHES :'(
 // Options to be added to the GUI
 let gui = new dat.GUI();
 let nMaxGens = gui.addFolder('Number of generations');
@@ -52,8 +51,8 @@ mtlLoader.load('models/fixed-scene.mtl', function ( materials ){
 				mesh.receiveShadow = true;
 				mesh.castShadow = true;
 				scene.add(mesh);
-				mesh.position.set(10, -40, -100);
-				mesh.rotation.set(0, -Math.PI / 2, 0);
+				mesh.position.set(-200, -40, 0);
+				mesh.rotation.set(0, -Math.PI, 0);
 			}
 		);
 	}
@@ -65,8 +64,8 @@ let mixers = [];
 let clock = new THREE.Clock; 
 let jsonLoader = new THREE.JDLoader();
 
-loadSeaweed(130, -35, -40, 0, Math.PI/2, 0);
-loadSeaweed(-100, -45, 0, 0, -Math.PI/3, 0);
+loadSeaweed(-300, -35, 130, 0, Math.PI/2, 0);
+loadSeaweed(-250, -37, -150, 0, -Math.PI/3, 0);
 
 // set ocean
 let waterGeo = new THREE.PlaneGeometry(3000, 3000, 100, 100);
@@ -261,9 +260,13 @@ function create3DFish(phenotype){
 	const colors = [0x1C77C3, 0x39A9DB, 0x40BCD8, 0xF39237, 0xE65F5C, 0x731DD8, 0x48A9A6, 0xE4DFDA];
 
 	let size = new THREE.Vector3(); // width, height, depth
+	let sizeX, sizeY, sizeZ;
 	let center = new THREE.Vector3(); // center point of the box
 	let max = new THREE.Vector3();
 	let min = new THREE.Vector3();
+	var helper;
+	//helper.update();
+	//scene.add(helper);
 
 	fishLoader.load('models/fish-body.obj', function ( mesh ){
 			mesh.traverse( function ( child ) {
@@ -280,11 +283,31 @@ function create3DFish(phenotype){
 			mesh.castShadow = true;
 			mesh.scale.set(phenotype[0]*0.25+1, phenotype[1]*0.25+1, phenotype[2]*0.25+1);
 			group.add(mesh);
-			var obj = new THREE.Box3().setFromObject( mesh );
+
+			let obj = new THREE.Box3().setFromObject(mesh);
 			obj.getSize(size);
 			obj.getCenter(center);
+			
+			/*console.log("center", center);
+
+			helper = new THREE.BoxHelper(mesh, 0xff0000);
+			console.log("obj", obj);
+			group.add(helper);*/
 		}
 	);
+
+	sizeX = size.x;
+	sizeY = size.y;
+	sizeZ = size.z;
+	// debug
+	if (sizeX < sizeZ) {
+		console.log("BUG DETECTED ________________________________");
+		console.log("size", size);
+		console.log("center", center);
+		let w = size.x;
+		size.x = size.z;
+		size.z = w;
+	}
 
 	fishLoader.load('models/dorsal-fin.obj', function ( mesh ){
 			mesh.traverse( function ( child ) {
@@ -300,7 +323,7 @@ function create3DFish(phenotype){
 			mesh.receiveShadow = true;
 			mesh.castShadow = true;
 			mesh.scale.set(1, phenotype[4]*0.25+1, phenotype[5]*0.25+1);
-			mesh.position.set(0, size.y/2, -size.x/3);
+			mesh.position.set(0, size.y/2, -size.z/3);
 			group.add(mesh);
 		}
 	);
@@ -319,7 +342,7 @@ function create3DFish(phenotype){
 			mesh.receiveShadow = true;
 			mesh.castShadow = true;
 			mesh.scale.set(1, phenotype[6]*0.25+1, phenotype[7]*0.25+1);
-			mesh.position.set(0, 0, -size.x);
+			mesh.position.set(0, 0, -size.z);
 			group.add(mesh);
 		}
 	);
@@ -338,7 +361,7 @@ function create3DFish(phenotype){
 			mesh.receiveShadow = true;
 			mesh.castShadow = true;
 			mesh.scale.set(phenotype[8]*0.25+1, phenotype[9]*0.25+1, 1);
-			mesh.position.set(-size.z/2, 0, -size.x/3);
+			mesh.position.set(-size.x/2, 0, -size.z/3);
 			group.add(mesh);
 		}
 	);
@@ -357,7 +380,7 @@ function create3DFish(phenotype){
 			mesh.receiveShadow = true;
 			mesh.castShadow = true;
 			mesh.scale.set(phenotype[8]*0.25+1, phenotype[9]*0.25+1, 1);
-			mesh.position.set(size.z/2, 0, -size.x/3);
+			mesh.position.set(size.x/2, 0, -size.z/3);
 			group.add(mesh);
 		}
 	);
@@ -469,9 +492,10 @@ Display fish Object3D in the scene
 */
 function displayFish(phenotype, x, y) {
 	let fish = create3DFish(phenotype);
-	scene.add( fish );
-	fish.rotation.y = Math.PI / 2;
-	fish.position.set(x - 350, 10 * y, -150);
+	scene.add(fish);
+	//fish.rotation.set(0, Math.PI / 2, 0);
+	//fish.position.set(x - 350, 10 * y, -150);
+	fish.position.set(-150, 10 * y, x - 350);
 }
 
 /*
@@ -570,13 +594,12 @@ function createAndDisplayFishes() {
 /* scene
 -------------------------------------------------------------*/
 let scene = new THREE.Scene();
-scene.fog = new THREE.Fog(colorPalette.screenBg, -30, 500);
+scene.fog = new THREE.Fog(colorPalette.screenBg, -30, 600);
 
 /* camera
 -------------------------------------------------------------*/
 let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(-3, 8, 100);
-camera.rotation.set(0, 0, 0);
+camera.position.set(-400, 0, 0);
 camera.lookAt(scene.position);
 scene.add(camera);
 
@@ -602,7 +625,8 @@ spotLight.intensity = 9;
 spotLight.decay = 4;
 spotLight.distance = 9000;
 spotLight.penumbra = 1.0;
-spotLight.position.set(-1800, 3000, 2000);
+//spotLight.position.set(-1800, 3000, 2000);
+spotLight.position.set(-2200, 3000, 0);
 scene.add(spotLight);
 
 /* PointLight
