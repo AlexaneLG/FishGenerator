@@ -74,17 +74,17 @@ let waterMat = new THREE.MeshPhongMaterial({
   color: 0x00aeff,
   emissive: 0x0023b9,
   flatShading: true,
-  shininess: 60,
+  shininess: 100,
   specular: 30,
   transparent: true,
+  opacity: 0.5,
+  reflectivity: 1,
   side: THREE.DoubleSide
 });
 
 for (let j = 0; j < waterGeo.vertices.length; j++) {
-  waterGeo.vertices[j].x =
-    waterGeo.vertices[j].x + Math.random() * Math.random() * 30;
-  waterGeo.vertices[j].y =
-    waterGeo.vertices[j].y + Math.random() * Math.random() * 20;
+  waterGeo.vertices[j].x = waterGeo.vertices[j].x + Math.random() * Math.random() * 30;
+  waterGeo.vertices[j].y = waterGeo.vertices[j].y + Math.random() * Math.random() * 20;
 }
 
 // loops
@@ -464,6 +464,9 @@ function selection(numberOfFishes) {
 	return selected;
 }
 
+/*
+Display fish Object3D in the scene
+*/
 function displayFish(phenotype, x, y) {
 	let fish = create3DFish(phenotype);
 	scene.add( fish );
@@ -471,6 +474,9 @@ function displayFish(phenotype, x, y) {
 	fish.position.set(x - 350, 10 * y, -150);
 }
 
+/*
+Remove all objects in the scene by name
+*/
 function removeEntities(name) {
 	let selectedObject;
 	do {
@@ -480,6 +486,85 @@ function removeEntities(name) {
 	    	//animate();
 	    }
 	} while (selectedObject);
+}
+
+/*
+Apply genetic algorithm
+*/
+function createAndDisplayFishes() {
+	//const maxGen = 5; // how many generations to display
+	let nGen = 0; // index or number of the generation
+	//const nFirstGen = 10; // number of fishes of first generation
+	let generations = []; // all fishes
+
+	generations = createRandomFishes(options.nFirstGen, 33, nGen); // init fishes
+
+	let posX = 0;
+	let n;
+	// display first generation
+	for (n = 0; n < generations.length; ++n) {
+		displayFish(generations[n].phenotypes, posX, generations[n].generation);
+		posX += 100;
+	}
+
+	do {
+		// select new generation based on generation - 1
+		nGen += 1;
+		console.log("__________________________________________________________________________GENERATION ", nGen);
+		let parents = [];
+		let selected = [];
+		let parentsGen = generations.filter(fish => fish.generation === nGen - 1); // select parents generation
+		console.log("ALL GEN", generations);
+		console.log("PREVIOUS GEN: ", parentsGen);
+
+		// selection based on parents generation
+		let p;
+		for (p = 0; p < 5; ++p) {
+			const selectedIndexes = selection(parentsGen.length);
+			let x;
+			for (x = 0; x < selectedIndexes.length; ++x) {
+				selected.push(parentsGen[selectedIndexes[x]]);
+			} 
+			const winner = tournament(selected);
+			console.log("SELECTED", selected);
+			console.log("WINNER", winner);
+			parents.push(winner);
+		}
+
+		// new gen
+		let indexFather;
+		let indexMother;
+		let child = 0;
+		let newGen = [];
+		//const nChilds = 10;
+
+		 while (child < options.nChilds) {
+			indexFather = getRandomInt(0, parents.length);
+			do {
+				indexMother = getRandomInt(0, parents.length);
+			} while (indexMother === indexFather);
+
+			let crossoveredGenotype = crossover(parents[indexFather].genotype, parents[indexMother].genotype);
+			newGen.push(createFishObject(crossoveredGenotype, nGen));
+			child += 1;
+		} 
+
+		// mutation
+		const mutationIndex = getRandomInt(0, newGen.length);
+		const mutated = mutation(newGen[mutationIndex]);
+		newGen[mutationIndex] = mutated;
+
+		console.log("NEW GEN: ", newGen);
+		generations = generations.concat(newGen);
+
+		// display new generation
+		posX = 0;
+		let n;
+		for (n = 0; n < newGen.length; ++n) {
+			displayFish(newGen[n].phenotypes, posX, nGen * 3);
+			posX += 100;
+		}
+	} while (nGen < options.nMaxGens);
 }
 
 /* scene
@@ -557,83 +642,6 @@ window.addEventListener( 'resize', onResize );
 -------------------------------------------------------------*/
 createAndDisplayFishes();
 GameLoop();
-
-/* ________________________________________________________________*/
-function createAndDisplayFishes() {
-	//const maxGen = 5; // how many generations to display
-	let nGen = 0; // index or number of the generation
-	//const nFirstGen = 10; // number of fishes of first generation
-	let generations = []; // all fishes
-
-	generations = createRandomFishes(options.nFirstGen, 33, nGen); // init fishes
-
-	let posX = 0;
-	let n;
-	// display first generation
-	for (n = 0; n < generations.length; ++n) {
-		displayFish(generations[n].phenotypes, posX, generations[n].generation);
-		posX += 100;
-	}
-
-	do {
-		// select new generation based on generation - 1
-		nGen += 1;
-		console.log("__________________________________________________________________________GENERATION ", nGen);
-		let parents = [];
-		let selected = [];
-		let parentsGen = generations.filter(fish => fish.generation === nGen - 1); // select parents generation
-		console.log("ALL GEN", generations);
-		console.log("PREVIOUS GEN: ", parentsGen);
-
-		// selection based on parents generation
-		let p;
-		for (p = 0; p < 5; ++p) {
-			const selectedIndexes = selection(parentsGen.length);
-			let x;
-			for (x = 0; x < selectedIndexes.length; ++x) {
-				selected.push(parentsGen[selectedIndexes[x]]);
-			} 
-			const winner = tournament(selected);
-			console.log("SELECTED", selected);
-			console.log("WINNER", winner);
-			parents.push(winner);
-		}
-
-		// new gen
-		let indexFather;
-		let indexMother;
-		let child = 0;
-		let newGen = [];
-		//const nChilds = 10;
-
-		 while (child < options.nChilds) {
-			indexFather = getRandomInt(0, parents.length);
-			do {
-				indexMother = getRandomInt(0, parents.length);
-			} while (indexMother === indexFather);
-
-			let crossoveredGenotype = crossover(parents[indexFather].genotype, parents[indexMother].genotype);
-			newGen.push(createFishObject(crossoveredGenotype, nGen));
-			child += 1;
-		} 
-
-		// mutation
-		const mutationIndex = getRandomInt(0, newGen.length);
-		const mutated = mutation(newGen[mutationIndex]);
-		newGen[mutationIndex] = mutated;
-
-		console.log("NEW GEN: ", newGen);
-		generations = generations.concat(newGen);
-
-		// display new generation
-		posX = 0;
-		let n;
-		for (n = 0; n < newGen.length; ++n) {
-			displayFish(newGen[n].phenotypes, posX, nGen * 3);
-			posX += 100;
-		}
-	} while (nGen < options.nMaxGens);
-}
 
 /* decors functions
 -------------------------------------------------------------*/
