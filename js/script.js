@@ -68,6 +68,27 @@ let jsonLoader = new THREE.JDLoader();
 loadSeaweed(130, -35, -40, 0, Math.PI/2, 0);
 loadSeaweed(-100, -45, 0, 0, -Math.PI/3, 0);
 
+// set ocean
+let waterGeo = new THREE.PlaneGeometry(3000, 3000, 100, 100);
+let waterMat = new THREE.MeshPhongMaterial({
+  color: 0x00aeff,
+  emissive: 0x0023b9,
+  flatShading: true,
+  shininess: 60,
+  specular: 30,
+  transparent: true,
+  side: THREE.DoubleSide
+});
+
+for (let j = 0; j < waterGeo.vertices.length; j++) {
+  waterGeo.vertices[j].x =
+    waterGeo.vertices[j].x + Math.random() * Math.random() * 30;
+  waterGeo.vertices[j].y =
+    waterGeo.vertices[j].y + Math.random() * Math.random() * 20;
+}
+
+// loops
+
 const render = () => {
     controls.update();
     renderer.render( scene, camera );
@@ -81,9 +102,9 @@ const onResize = () => {
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
 }
-let iMixer = 0;
-let update = function ()
-{
+
+let count = 0;
+let update = function () {
 	// game logic
 	//boids.update();
 
@@ -91,6 +112,17 @@ let update = function ()
 	for (let i = 0; i < mixers.length; ++i) {
     	mixers[i].update(delta);
 	}	
+
+	// animate ocean
+	let i = 0;
+	for (let ix = 0; ix < 100; ix++) {
+	    for (let iy = 0; iy < 100; iy++) {
+	      waterObj.geometry.vertices[i++].z = Math.sin((ix + count) * 2) * 3 + Math.cos((iy + count) * 1.5) * 6;
+	      waterObj.geometry.verticesNeedUpdate = true;
+	    }
+	}
+	count += 0.015;
+		
 };
 
 let GameLoop = function () {
@@ -221,6 +253,7 @@ function createPhenotype(genotype) {
 /*
 phenotype: Array of integers
 return Group of meshes / 3d objects
+SCALE -> BUG
 */
 function create3DFish(phenotype){
 	let fishLoader = new THREE.OBJLoader();
@@ -235,7 +268,6 @@ function create3DFish(phenotype){
 	fishLoader.load('models/fish-body.obj', function ( mesh ){
 			mesh.traverse( function ( child ) {
             	if ( child instanceof THREE.Mesh ) {
-                	//child.material.color.setHex(colors[phenotype[3]]);
                 	child.material = new THREE.MeshPhongMaterial({
                 		color: colors[phenotype[3]],
                 		flatShading: true,
@@ -254,15 +286,9 @@ function create3DFish(phenotype){
 		}
 	);
 
-	/*if (size.x < 10) {
-		size.x = 30;
-		console.log('INF 10');
-	}*/
-
 	fishLoader.load('models/dorsal-fin.obj', function ( mesh ){
 			mesh.traverse( function ( child ) {
             	if ( child instanceof THREE.Mesh ) {
-                	//child.material.color.setHex(colors[phenotype[10]]);
                 	child.material = new THREE.MeshPhongMaterial({
                 		color: colors[phenotype[10]],
                 		flatShading: true,
@@ -282,7 +308,6 @@ function create3DFish(phenotype){
 	fishLoader.load('models/caudal-fin.obj', function ( mesh ){
 			mesh.traverse( function ( child ) {
             	if ( child instanceof THREE.Mesh ) {
-                	//child.material.color.setHex(colors[phenotype[10]]);
                 	child.material = new THREE.MeshPhongMaterial({
                 		color: colors[phenotype[10]],
                 		flatShading: true,
@@ -302,7 +327,6 @@ function create3DFish(phenotype){
 	fishLoader.load('models/pectoral-fin.obj', function ( mesh ){
 			mesh.traverse( function ( child ) {
             	if ( child instanceof THREE.Mesh ) {
-                	//child.material.color.setHex(colors[phenotype[10]]);
                 	child.material = new THREE.MeshPhongMaterial({
                 		color: colors[phenotype[10]],
                 		flatShading: true,
@@ -322,7 +346,6 @@ function create3DFish(phenotype){
 	fishLoader.load('models/pectoral-fin.obj', function ( mesh ){
 			mesh.traverse( function ( child ) {
             	if ( child instanceof THREE.Mesh ) {
-                	//child.material.color.setHex(colors[phenotype[10]]);
                 	child.material = new THREE.MeshPhongMaterial({
                 		color: colors[phenotype[10]],
                 		flatShading: true,
@@ -512,13 +535,19 @@ const isLongSideWidth = window.innerWidth > window.innerHeight;
 const boxContainer = new BoxContainer(2300, 2300, 2300, colorPalette.boxContainer);
 scene.add(boxContainer.mesh);
 
+/* Ocean
+-------------------------------------------------------------*/
+let waterObj = new THREE.Mesh(waterGeo, waterMat);
+waterObj.rotation.x = -Math.PI / 2;
+waterObj.position.y = 150;
+scene.add(waterObj);
+
 /* OrbitControls
 -------------------------------------------------------------*/
 const controls = new THREE.OrbitControls( camera, renderer.domElement );
 /*orbitControls.autoRotate = false;
 orbitControls.enableDamping = true;
 orbitControls.dampingFactor = 0.39;*/
-//controls.update();
 
 /* resize
 -------------------------------------------------------------*/
@@ -650,3 +679,4 @@ function loadSeaweed(posX, posY, posZ, rotX, rotY, rotZ) {
 	    }        
 	});
 }
+
