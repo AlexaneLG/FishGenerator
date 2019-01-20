@@ -150,57 +150,173 @@ class BoxContainer {
 
 /* GENETIC ALGORITHM
 -------------------------------------------------------------*/
+let genotypeFitness = {
+    sizeXBody: {
+    	bits: [0, 0, 0],
+    	nBits: 3,
+    	phenotype: 0,
+    	forFitness: true
+    },
+    sizeYBody: {
+    	bits: [0, 1, 1],
+    	nBits: 3,
+    	phenotype: 0,
+    	forFitness: true
+    },
+    sizeZBody: {
+    	bits: [0, 1, 1],
+    	nBits: 3,
+    	phenotype: 0,
+    	forFitness: true
+    },
+    colorBody: {
+    	bits: [0, 1, 0],
+    	nBits: 3,
+    	phenotype: 0,
+    	forFitness: false
+    },
+    sizeYDorsalFin: {
+    	bits: [0, 1, 0],
+    	nBits: 3,
+    	phenotype: 0,
+    	forFitness: true
+    },
+    sizeZDorsalFin: {
+    	bits: [0, 1, 1],
+    	nBits: 3,
+    	phenotype: 0,
+    	forFitness: true
+    },
+    sizeYCaudalFin: {
+    	bits: [0, 1, 1],
+    	nBits: 3,
+    	phenotype: 0,
+    	forFitness: true
+    },
+    sizeZCaudalFin: {
+    	bits: [0, 1, 0],
+    	nBits: 3,
+    	phenotype: 0,
+    	forFitness: true
+    },
+    sizeXPectoralFin: {
+    	bits: [1, 1, 0],
+    	nBits: 3,
+    	phenotype: 0,
+    	forFitness: true
+    },
+    sizeYPectoralFin: {
+    	bits: [0, 1, 1],
+    	nBits: 3,
+    	phenotype: 0,
+    	forFitness: true
+    },
+    colorFin: {
+    	bits: [1, 1, 0],
+    	nBits: 3,
+    	phenotype: 0,
+    	forFitness: false
+    }
+}
 
-/* Parameters
-A fish as :
-	# body
-	# dorsal fin
-	# caudal fin
-	# pectoral fins (paired)
-Body is defined by :
-	# size x
-	# size y
-	# size z
-	# color R de 0 à 255
-	# color G de 0 à 255
-	# color B de 0 à 255
-Each fin is defined by :
-	# size between 1 and 4
-	# color R de 0 à 255
-	# color G de 0 à 255
-	# color B de 0 à 255
+/*
+return Object: genotype's reference structure
 */
-
-/* Genotype
-sizeXBody | sizeYBody | sizeZBody | colorBody | sizeXDorsalFin | sizeYDorsalFin | sizeXCaudalFin | sizeYCaudalFin | sizeXPectoralFin | sizeYPectoralFin | colorFin
-100 | 100 | 100 | 111 | 100 | 100 | 100 | 100 | 100 | 100 | 111
-Soit 33 bits
-*/
+function createGenotypeObject() {
+	return {
+	    sizeXBody: {
+	    	bits: [],
+	    	nBits: 3,
+	    	phenotype: 0,
+	    	forFitness: true
+	    },
+	    sizeYBody: {
+	    	bits: [],
+	    	nBits: 3,
+	    	phenotype: 0,
+	    	forFitness: true
+	    },
+	    sizeZBody: {
+	    	bits: [],
+	    	nBits: 3,
+	    	phenotype: 0,
+	    	forFitness: true
+	    },
+	    colorBody: {
+	    	bits: [],
+	    	nBits: 3,
+	    	phenotype: 0,
+	    	forFitness: false
+	    },
+	    sizeYDorsalFin: {
+	    	bits: [],
+	    	nBits: 3,
+	    	phenotype: 0,
+	    	forFitness: true
+	    },
+	    sizeZDorsalFin: {
+	    	bits: [],
+	    	nBits: 3,
+	    	phenotype: 0,
+	    	forFitness: true
+	    },
+	    sizeYCaudalFin: {
+	    	bits: [],
+	    	nBits: 3,
+	    	phenotype: 0,
+	    	forFitness: true
+	    },
+	    sizeZCaudalFin: {
+	    	bits: [],
+	    	nBits: 3,
+	    	phenotype: 0,
+	    	forFitness: true
+	    },
+	    sizeXPectoralFin: {
+	    	bits: [],
+	    	nBits: 3,
+	    	phenotype: 0,
+	    	forFitness: true
+	    },
+	    sizeYPectoralFin: {
+	    	bits: [],
+	    	nBits: 3,
+	    	phenotype: 0,
+	    	forFitness: true
+	    },
+	    colorFin: {
+	    	bits: [],
+	    	nBits: 3,
+	    	phenotype: 0,
+	    	forFitness: false
+	    }
+	};
+}
 
 /* 
-n: number of bits 
-return Array of bits
+return genotype object filled of random bits
 */
-function createRandomGenotype(nBits) {
-	let i;
-	let genotype = [];
-	for (i = 0; i < nBits; ++i) {
-		let binary = Math.round(Math.random());
-		genotype.push(binary); // 0 or 1
+function createRandomGenotype() {
+	let genotype = createGenotypeObject();
+	for (let property in genotype) {
+		for (let i = 0;  i < genotype[property].nBits; ++i) {
+			let bit = Math.round(Math.random());
+			genotype[property].bits.push(bit); // 0 or 1
+		}
 	}
+
 	return genotype;
 }
 
 /*
-binaries: genotype of the fish
+bits: genotype of the fish
 nGeneration: number of generation of the fish
 return Object: { genotype, phenotypes, fitness }
 */
-function createFishObject(binaries, nGeneration) {
+function createFishObject(genotypeObject, nGeneration) {
 	return {
-		genotype: binaries,
-		phenotypes: createPhenotype(binaries),
-		fitness: fitness(binaries),
+		genotype: createPhenotypes(genotypeObject),
+		fitness: fitness(genotypeObject),
 		generation: nGeneration
 	};
 }
@@ -211,13 +327,13 @@ nBits: number of bits
 nGen: generation of the fish
 return Array of fish objects
 */
-function createRandomFishes(nFishes, nBits, nGen) {
+function createRandomFishes(nFishes, nGen) {
 	let i = 0;
 	let fishes = [];
 
 	while (i < nFishes) {
 		++i;
-		let genotype = createRandomGenotype(nBits);
+		let genotype = createRandomGenotype();
 		fishes.push(createFishObject(genotype, nGen));
 	}
 	return fishes;
@@ -229,32 +345,28 @@ return converted int
 */
 function binaryToInt(binaries) {
 	let int = 0;
-	let i;
-	for (i = 0; i < binaries.length; ++i) {
+	for (let i = 0; i < binaries.length; ++i) {
 		int += binaries[i] * Math.pow(2, binaries.length - 1 - i);
 	}
 	return int;
 }
 
 /*
-genotype: Array of bits
-return Array of phenotypes
+genotype: Object
+return Object
 */
-function createPhenotype(genotype) {
-	let phenotype = [];
-	let i;
-	for (i = 0; i < genotype.length; i += 3) {
-		phenotype.push(binaryToInt(genotype.slice(i, i+3)));
+function createPhenotypes(genotype) {
+	for (let property in genotype) {
+		genotype[property].phenotype = binaryToInt(genotype[property].bits);
 	}
-	return phenotype;
+	return genotype;
 }
 
 /*
 phenotype: Array of integers
 return Group of meshes / 3d objects
-SCALE -> BUG
 */
-function create3DFish(phenotype){
+function create3DFish(genotype){
 	let fishLoader = new THREE.OBJLoader();
 	let group = new THREE.Group();
 	const colors = [0x1C77C3, 0x39A9DB, 0x40BCD8, 0xF39237, 0xE65F5C, 0x731DD8, 0x48A9A6, 0xE4DFDA];
@@ -262,67 +374,43 @@ function create3DFish(phenotype){
 	let size = new THREE.Vector3(); // width, height, depth
 	let sizeX, sizeY, sizeZ;
 	let center = new THREE.Vector3(); // center point of the box
-	let max = new THREE.Vector3();
-	let min = new THREE.Vector3();
-	var helper;
-	//helper.update();
-	//scene.add(helper);
 
 	fishLoader.load('models/fish-body.obj', function ( mesh ){
 			mesh.traverse( function ( child ) {
             	if ( child instanceof THREE.Mesh ) {
                 	child.material = new THREE.MeshPhongMaterial({
-                		color: colors[phenotype[3]],
+                		color: colors[genotype.colorBody.phenotype],
                 		flatShading: true,
                 		shininess: 200,
-                		specular: colors[phenotype[3]]
+                		specular: colors[genotype.colorBody.phenotype]
                 	});
                 }
             });
 			mesh.receiveShadow = true;
 			mesh.castShadow = true;
-			mesh.scale.set(phenotype[0]*0.25+1, phenotype[1]*0.25+1, phenotype[2]*0.25+1);
+			mesh.scale.set(genotype.sizeXBody.phenotype*0.25+1, genotype.sizeYBody.phenotype*0.25+1, genotype.sizeZBody.phenotype*0.25+1);
 			group.add(mesh);
 
 			let obj = new THREE.Box3().setFromObject(mesh);
 			obj.getSize(size);
 			obj.getCenter(center);
-			
-			/*console.log("center", center);
-
-			helper = new THREE.BoxHelper(mesh, 0xff0000);
-			console.log("obj", obj);
-			group.add(helper);*/
 		}
 	);
-
-	sizeX = size.x;
-	sizeY = size.y;
-	sizeZ = size.z;
-	// debug
-	if (sizeX < sizeZ) {
-		console.log("BUG DETECTED ________________________________");
-		console.log("size", size);
-		console.log("center", center);
-		let w = size.x;
-		size.x = size.z;
-		size.z = w;
-	}
 
 	fishLoader.load('models/dorsal-fin.obj', function ( mesh ){
 			mesh.traverse( function ( child ) {
             	if ( child instanceof THREE.Mesh ) {
                 	child.material = new THREE.MeshPhongMaterial({
-                		color: colors[phenotype[10]],
+                		color: colors[genotype.colorFin.phenotype],
                 		flatShading: true,
                 		shininess: 200,
-                		specular: colors[phenotype[10]]
+                		specular: colors[genotype.colorFin.phenotype]
                 	});
                 }
             });
 			mesh.receiveShadow = true;
 			mesh.castShadow = true;
-			mesh.scale.set(1, phenotype[4]*0.25+1, phenotype[5]*0.25+1);
+			mesh.scale.set(1, genotype.sizeYDorsalFin.phenotype*0.25+1, genotype.sizeZDorsalFin.phenotype*0.25+1);
 			mesh.position.set(0, size.y/2, -size.z/3);
 			group.add(mesh);
 		}
@@ -332,16 +420,16 @@ function create3DFish(phenotype){
 			mesh.traverse( function ( child ) {
             	if ( child instanceof THREE.Mesh ) {
                 	child.material = new THREE.MeshPhongMaterial({
-                		color: colors[phenotype[10]],
+                		color: colors[genotype.colorFin.phenotype],
                 		flatShading: true,
                 		shininess: 200,
-                		specular: colors[phenotype[10]]
+                		specular: colors[genotype.colorFin.phenotype]
                 	});
                 }
             });
 			mesh.receiveShadow = true;
 			mesh.castShadow = true;
-			mesh.scale.set(1, phenotype[6]*0.25+1, phenotype[7]*0.25+1);
+			mesh.scale.set(1, genotype.sizeYCaudalFin.phenotype*0.25+1, genotype.sizeZCaudalFin.phenotype*0.25+1);
 			mesh.position.set(0, 0, -size.z);
 			group.add(mesh);
 		}
@@ -351,16 +439,16 @@ function create3DFish(phenotype){
 			mesh.traverse( function ( child ) {
             	if ( child instanceof THREE.Mesh ) {
                 	child.material = new THREE.MeshPhongMaterial({
-                		color: colors[phenotype[10]],
+                		color: colors[genotype.colorFin.phenotype],
                 		flatShading: true,
                 		shininess: 200,
-                		specular: colors[phenotype[10]]
+                		specular: colors[genotype.colorFin.phenotype]
                 	});
                 }
             });
 			mesh.receiveShadow = true;
 			mesh.castShadow = true;
-			mesh.scale.set(phenotype[8]*0.25+1, phenotype[9]*0.25+1, 1);
+			mesh.scale.set(genotype.sizeXPectoralFin.phenotype*0.25+1, genotype.sizeYPectoralFin.phenotype*0.25+1, 1);
 			mesh.position.set(-size.x/2, 0, -size.z/3);
 			group.add(mesh);
 		}
@@ -370,16 +458,16 @@ function create3DFish(phenotype){
 			mesh.traverse( function ( child ) {
             	if ( child instanceof THREE.Mesh ) {
                 	child.material = new THREE.MeshPhongMaterial({
-                		color: colors[phenotype[10]],
+                		color: colors[genotype.colorFin.phenotype],
                 		flatShading: true,
                 		shininess: 200,
-                		specular: colors[phenotype[10]]
+                		specular: colors[genotype.colorFin.phenotype]
                 	});
                 }
             });
 			mesh.receiveShadow = true;
 			mesh.castShadow = true;
-			mesh.scale.set(phenotype[8]*0.25+1, phenotype[9]*0.25+1, 1);
+			mesh.scale.set(genotype.sizeXPectoralFin.phenotype*0.25+1, genotype.sizeYPectoralFin.phenotype*0.25+1, 1);
 			mesh.position.set(size.x/2, 0, -size.z/3);
 			group.add(mesh);
 		}
@@ -406,32 +494,36 @@ return Fish Object with 1 mutated bit in his genotype
 */
 function mutation(fish) {
 	let fishM = fish;
-	const nAttributs = 11;
+	const properties = Object.keys(fish.genotype); // array of properties
+
+	const nAttributs = properties.length;
 	const randAttribut = getRandomInt(0, nAttributs);
-	const lenghtAttribut = 3;
+	const property = properties[randAttribut];
+
+	const lenghtAttribut = fish.genotype[property].nBits; // number of bits
 	const randBit = getRandomInt(0, lenghtAttribut);
-	const index = randAttribut * 3 + randBit;
-	const bit = fishM.genotype[index] === 0 ? 1 : 0;
-	fishM.genotype[index] = bit;
-	fishM.phenotypes = createPhenotype(fishM.genotype);
+
+	const bit = fishM.genotype[property].bits[randBit] === 0 ? 1 : 0;
+	fishM.genotype[property].bits[randBit] = bit;
+
+	fishM.genotype = createPhenotypes(fishM.genotype);
 	return fishM;
 }
 
 /*
-genotypeA: Array of bits
-genotypeB: Array of bits
-return Array of bits, new genotype
+genotypeA: Object
+genotypeB: Object
+return Object, new genotype
 */
 function crossover(genotypeA, genotypeB) {
-	let i;
-	const nAttributs = 11;
-	let genotypeC = [];
+	let genotypeC = createGenotypeObject();
+	const properties = Object.keys(genotypeC); // array of properties
+	const nAttributs = properties.length;
 	
-	for ( i = 0; i < nAttributs; ++i ) {
-		const randAttribut = Math.round(Math.random());
-		const parentGenotype = randAttribut === 0 ? genotypeA : genotypeB;
-		const parentAttribut = parentGenotype.slice( i * 3, i * 3 + 3 );
-		genotypeC = genotypeC.concat( parentAttribut );
+	for (let property in genotypeC) {
+		const randProperty = Math.round(Math.random()); // 0 or 1
+		const parentGenotype = randProperty === 0 ? genotypeA : genotypeB;
+		genotypeC[property].bits = parentGenotype[property].bits;
 	}
 	
 	return genotypeC;
@@ -441,14 +533,13 @@ function crossover(genotypeA, genotypeB) {
 Estimate difference between ideal fitness and compared genotype 
 */
 function fitness(genotype) {
-	const fitness = [0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0];
-	const colorsIndexes = [9, 10, 11, 30, 31, 32];
-	let i;
 	let difference = 0;
-	for (i = 0; i < fitness.length; ++i) {
-		if (colorsIndexes.includes(i) == false) {
-			if (fitness[i] != genotype[i]) {
-				difference += 1;
+	for (let property in genotype) {
+		if (genotype[property].forFitness == true) {
+			for (let i = 0; i < genotype[property].nBits; ++i) {
+				if (genotype[property].nBits[i] != genotypeFitness[property].nBits[i]) {
+					difference += 1;
+				}
 			}
 		}
 	}
@@ -490,8 +581,8 @@ function selection(numberOfFishes) {
 /*
 Display fish Object3D in the scene
 */
-function displayFish(phenotype, x, y) {
-	let fish = create3DFish(phenotype);
+function displayFish(genotype, x, y) {
+	let fish = create3DFish(genotype);
 	scene.add(fish);
 	//fish.rotation.set(0, Math.PI / 2, 0);
 	//fish.position.set(x - 350, 10 * y, -150);
@@ -516,21 +607,19 @@ function removeEntities(name) {
 Apply genetic algorithm
 */
 function createAndDisplayFishes() {
-	//const maxGen = 5; // how many generations to display
 	let nGen = 0; // index or number of the generation
-	//const nFirstGen = 10; // number of fishes of first generation
 	let generations = []; // all fishes
 
-	generations = createRandomFishes(options.nFirstGen, 33, nGen); // init fishes
+	generations = createRandomFishes(options.nFirstGen, nGen); // init fishes
 
 	let posX = 0;
 	let n;
 	// display first generation
 	for (n = 0; n < generations.length; ++n) {
-		displayFish(generations[n].phenotypes, posX, generations[n].generation);
+		displayFish(generations[n].genotype, posX, generations[n].generation);
 		posX += 100;
 	}
-
+	
 	do {
 		// select new generation based on generation - 1
 		nGen += 1;
@@ -550,8 +639,8 @@ function createAndDisplayFishes() {
 				selected.push(parentsGen[selectedIndexes[x]]);
 			} 
 			const winner = tournament(selected);
-			console.log("SELECTED", selected);
-			console.log("WINNER", winner);
+			/*console.log("SELECTED", selected);
+			console.log("WINNER", winner);*/
 			parents.push(winner);
 		}
 
@@ -560,7 +649,6 @@ function createAndDisplayFishes() {
 		let indexMother;
 		let child = 0;
 		let newGen = [];
-		//const nChilds = 10;
 
 		 while (child < options.nChilds) {
 			indexFather = getRandomInt(0, parents.length);
@@ -585,7 +673,7 @@ function createAndDisplayFishes() {
 		posX = 0;
 		let n;
 		for (n = 0; n < newGen.length; ++n) {
-			displayFish(newGen[n].phenotypes, posX, nGen * 3);
+			displayFish(newGen[n].genotype, posX, nGen * 3);
 			posX += 100;
 		}
 	} while (nGen < options.nMaxGens);
