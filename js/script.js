@@ -42,6 +42,7 @@ mtlLoader.load('models/fixed-scene.mtl', function ( materials ){
 		materials.preload();
 		let objLoader = new THREE.OBJLoader();
 		objLoader.setMaterials(materials);
+		//console.log("DEBUG materials", materials);
 		objLoader.load('models/fixed-scene.obj', function ( mesh ){
 				mesh.traverse( function ( child ) {
 		        	if ( child instanceof THREE.Mesh ) {
@@ -151,6 +152,30 @@ class BoxContainer {
 /* GENETIC ALGORITHM
 -------------------------------------------------------------*/
 let genotypeFitness = {
+	bodyModel: {
+    	bits: [0],
+    	nBits: 1,
+    	phenotype: 0,
+    	forFitness: true
+    },
+    dorsalFinModel: {
+    	bits: [0],
+    	nBits: 1,
+    	phenotype: 0,
+    	forFitness: true
+    },
+    pectoralFinModel: {
+    	bits: [0],
+    	nBits: 1,
+    	phenotype: 0,
+    	forFitness: true
+    },
+    caudalFinModel: {
+    	bits: [0],
+    	nBits: 1,
+    	phenotype: 0,
+    	forFitness: true
+    },
     sizeXBody: {
     	bits: [0, 0, 0],
     	nBits: 3,
@@ -224,6 +249,30 @@ return Object: genotype's reference structure
 */
 function createGenotypeObject() {
 	return {
+		bodyModel: {
+	    	bits: [],
+	    	nBits: 1,
+	    	phenotype: 0,
+	    	forFitness: true
+	    },
+	    dorsalFinModel: {
+	    	bits: [],
+	    	nBits: 1,
+	    	phenotype: 0,
+	    	forFitness: true
+	    },
+	    pectoralFinModel: {
+	    	bits: [],
+	    	nBits: 1,
+	    	phenotype: 0,
+	    	forFitness: true
+	    },
+	    caudalFinModel: {
+	    	bits: [],
+	    	nBits: 1,
+	    	phenotype: 0,
+	    	forFitness: true
+	    },
 	    sizeXBody: {
 	    	bits: [],
 	    	nBits: 3,
@@ -244,7 +293,7 @@ function createGenotypeObject() {
 	    },
 	    colorBody: {
 	    	bits: [],
-	    	nBits: 3,
+	    	nBits: 4,
 	    	phenotype: 0,
 	    	forFitness: false
 	    },
@@ -286,7 +335,7 @@ function createGenotypeObject() {
 	    },
 	    colorFin: {
 	    	bits: [],
-	    	nBits: 3,
+	    	nBits: 4,
 	    	phenotype: 0,
 	    	forFitness: false
 	    }
@@ -369,109 +418,115 @@ return Group of meshes / 3d objects
 function create3DFish(genotype){
 	let fishLoader = new THREE.OBJLoader();
 	let group = new THREE.Group();
-	const colors = [0x1C77C3, 0x39A9DB, 0x40BCD8, 0xF39237, 0xE65F5C, 0x731DD8, 0x48A9A6, 0xE4DFDA];
+	//const colors = [0x1C77C3, 0x39A9DB, 0x40BCD8, 0xF39237, 0xE65F5C, 0x731DD8, 0x48A9A6, 0xE4DFDA];
+	//const colors = [0xc3c5b5, 0xc9c67c, 0x75b031, 0x31a372, 0x12929c, 0x4f39db, 0x834cd8, 0xb94ad6, 0xea3da5, 0xdf533a, 0xf66f13, 0xfd2d08, 0xfb9800, 0xf2db5c, 0xfff487, 0xf0ffb7];
+	const colors = [0x7dd0b6, 0x7dd0ca, 0x7dbdd0, 0x7da6d0, 0x7d88d0, 0xffd4f5, 0xE65F5C, 0xffddd4, 0xffe5d4, 0xffecd4, 0xfeffa7, 0xfeff86, 0xf6b6da, 0xfeffba, 0xffffe8, 0xF39237];
+	const bodyModels = ['models/fish-body-01.obj', 'models/fish-body-02.obj'];
+	const dorsalFinModels = ['models/dorsal-fin-01.obj', 'models/dorsal-fin-02.obj'];
+	const pectoralFinModels = ['models/pectoral-fin-01.obj', 'models/pectoral-fin-02.obj'];
+	const caudalFinModels = ['models/caudal-fin-01.obj', 'models/caudal-fin-02.obj'];
 
-	let size = new THREE.Vector3(); // width, height, depth
-	let sizeX, sizeY, sizeZ;
-	let center = new THREE.Vector3(); // center point of the box
+	let sizes = []; // size = Vector3(width, height, depth)
+	// for each body
+	for (let m = 0; m < bodyModels.length; ++m) {
+		fishLoader.load(bodyModels[m], function ( mesh ){
+				mesh.scale.set(genotype.sizeXBody.phenotype*0.25+1, genotype.sizeYBody.phenotype*0.25+1, genotype.sizeZBody.phenotype*0.25+1);
+				let obj = new THREE.Box3().setFromObject(mesh);
+				minBox = obj.min;
+				maxBox = obj.max;
+				sizes[m]  = new THREE.Vector3(maxBox.x - minBox.x, maxBox.y - minBox.y, maxBox.z - minBox.z);
+			}
+		);
+	}
 
-	fishLoader.load('models/fish-body.obj', function ( mesh ){
-			mesh.traverse( function ( child ) {
-            	if ( child instanceof THREE.Mesh ) {
-                	child.material = new THREE.MeshPhongMaterial({
-                		color: colors[genotype.colorBody.phenotype],
-                		flatShading: true,
-                		shininess: 200,
-                		specular: colors[genotype.colorBody.phenotype]
-                	});
-                }
-            });
-			mesh.receiveShadow = true;
-			mesh.castShadow = true;
-			mesh.scale.set(genotype.sizeXBody.phenotype*0.25+1, genotype.sizeYBody.phenotype*0.25+1, genotype.sizeZBody.phenotype*0.25+1);
-			group.add(mesh);
+	fishLoader.load(bodyModels[genotype.bodyModel.phenotype], function ( mesh ){
+		mesh.traverse(function ( child ) {
+        	if ( child instanceof THREE.Mesh ) {
+            	child.material = new THREE.MeshPhongMaterial({
+            		color: colors[genotype.colorBody.phenotype],
+            		flatShading: true,
+            		shininess: 200,
+            		specular: colors[genotype.colorBody.phenotype]
+            	});
+            }
+        });
+		mesh.receiveShadow = true;
+		mesh.castShadow = true;
+		mesh.scale.set(genotype.sizeXBody.phenotype*0.25+1, genotype.sizeYBody.phenotype*0.25+1, genotype.sizeZBody.phenotype*0.25+1);
+		group.add(mesh);
+	});
 
-			let obj = new THREE.Box3().setFromObject(mesh);
-			obj.getSize(size);
-			obj.getCenter(center);
-		}
-	);
+	fishLoader.load(dorsalFinModels[genotype.dorsalFinModel.phenotype], function ( mesh ){
+		mesh.traverse( function ( child ) {
+        	if ( child instanceof THREE.Mesh ) {
+            	child.material = new THREE.MeshPhongMaterial({
+            		color: colors[genotype.colorFin.phenotype],
+            		flatShading: true,
+            		shininess: 200,
+            		specular: colors[genotype.colorFin.phenotype]
+            	});
+            }
+        });
+		mesh.receiveShadow = true;
+		mesh.castShadow = true;
+		mesh.scale.set(1, genotype.sizeYDorsalFin.phenotype*0.25+1, genotype.sizeZDorsalFin.phenotype*0.25+1);
+		mesh.position.set(0, sizes[genotype.bodyModel.phenotype].y/2, -sizes[genotype.bodyModel.phenotype].z/3);
+		group.add(mesh);
+	});
 
-	fishLoader.load('models/dorsal-fin.obj', function ( mesh ){
-			mesh.traverse( function ( child ) {
-            	if ( child instanceof THREE.Mesh ) {
-                	child.material = new THREE.MeshPhongMaterial({
-                		color: colors[genotype.colorFin.phenotype],
-                		flatShading: true,
-                		shininess: 200,
-                		specular: colors[genotype.colorFin.phenotype]
-                	});
-                }
-            });
-			mesh.receiveShadow = true;
-			mesh.castShadow = true;
-			mesh.scale.set(1, genotype.sizeYDorsalFin.phenotype*0.25+1, genotype.sizeZDorsalFin.phenotype*0.25+1);
-			mesh.position.set(0, size.y/2, -size.z/3);
-			group.add(mesh);
-		}
-	);
+	fishLoader.load(caudalFinModels[genotype.caudalFinModel.phenotype], function ( mesh ){
+		mesh.traverse( function ( child ) {
+        	if ( child instanceof THREE.Mesh ) {
+            	child.material = new THREE.MeshPhongMaterial({
+            		color: colors[genotype.colorFin.phenotype],
+            		flatShading: true,
+            		shininess: 200,
+            		specular: colors[genotype.colorFin.phenotype]
+            	});
+            }
+        });
+		mesh.receiveShadow = true;
+		mesh.castShadow = true;
+		mesh.scale.set(1, genotype.sizeYCaudalFin.phenotype*0.25+1, genotype.sizeZCaudalFin.phenotype*0.25+1);
+		mesh.position.set(0, 0, -sizes[genotype.bodyModel.phenotype].z);
+		group.add(mesh);
+	});
 
-	fishLoader.load('models/caudal-fin.obj', function ( mesh ){
-			mesh.traverse( function ( child ) {
-            	if ( child instanceof THREE.Mesh ) {
-                	child.material = new THREE.MeshPhongMaterial({
-                		color: colors[genotype.colorFin.phenotype],
-                		flatShading: true,
-                		shininess: 200,
-                		specular: colors[genotype.colorFin.phenotype]
-                	});
-                }
-            });
-			mesh.receiveShadow = true;
-			mesh.castShadow = true;
-			mesh.scale.set(1, genotype.sizeYCaudalFin.phenotype*0.25+1, genotype.sizeZCaudalFin.phenotype*0.25+1);
-			mesh.position.set(0, 0, -size.z);
-			group.add(mesh);
-		}
-	);
+	fishLoader.load(pectoralFinModels[genotype.pectoralFinModel.phenotype], function ( mesh ){
+		mesh.traverse( function ( child ) {
+        	if ( child instanceof THREE.Mesh ) {
+            	child.material = new THREE.MeshPhongMaterial({
+            		color: colors[genotype.colorFin.phenotype],
+            		flatShading: true,
+            		shininess: 200,
+            		specular: colors[genotype.colorFin.phenotype]
+            	});
+            }
+        });
+		mesh.receiveShadow = true;
+		mesh.castShadow = true;
+		mesh.scale.set(genotype.sizeXPectoralFin.phenotype*0.25+1, genotype.sizeYPectoralFin.phenotype*0.25+1, 1);
+		mesh.position.set(-sizes[genotype.bodyModel.phenotype].x/2, 0, -sizes[genotype.bodyModel.phenotype].z/3);
+		group.add(mesh);
+	});
 
-	fishLoader.load('models/pectoral-fin.obj', function ( mesh ){
-			mesh.traverse( function ( child ) {
-            	if ( child instanceof THREE.Mesh ) {
-                	child.material = new THREE.MeshPhongMaterial({
-                		color: colors[genotype.colorFin.phenotype],
-                		flatShading: true,
-                		shininess: 200,
-                		specular: colors[genotype.colorFin.phenotype]
-                	});
-                }
-            });
-			mesh.receiveShadow = true;
-			mesh.castShadow = true;
-			mesh.scale.set(genotype.sizeXPectoralFin.phenotype*0.25+1, genotype.sizeYPectoralFin.phenotype*0.25+1, 1);
-			mesh.position.set(-size.x/2, 0, -size.z/3);
-			group.add(mesh);
-		}
-	);
-
-	fishLoader.load('models/pectoral-fin.obj', function ( mesh ){
-			mesh.traverse( function ( child ) {
-            	if ( child instanceof THREE.Mesh ) {
-                	child.material = new THREE.MeshPhongMaterial({
-                		color: colors[genotype.colorFin.phenotype],
-                		flatShading: true,
-                		shininess: 200,
-                		specular: colors[genotype.colorFin.phenotype]
-                	});
-                }
-            });
-			mesh.receiveShadow = true;
-			mesh.castShadow = true;
-			mesh.scale.set(genotype.sizeXPectoralFin.phenotype*0.25+1, genotype.sizeYPectoralFin.phenotype*0.25+1, 1);
-			mesh.position.set(size.x/2, 0, -size.z/3);
-			group.add(mesh);
-		}
-	);
+	fishLoader.load(pectoralFinModels[genotype.pectoralFinModel.phenotype], function ( mesh ){
+		mesh.traverse( function ( child ) {
+        	if ( child instanceof THREE.Mesh ) {
+            	child.material = new THREE.MeshPhongMaterial({
+            		color: colors[genotype.colorFin.phenotype],
+            		flatShading: true,
+            		shininess: 200,
+            		specular: colors[genotype.colorFin.phenotype]
+            	});
+            }
+        });
+		mesh.receiveShadow = true;
+		mesh.castShadow = true;
+		mesh.scale.set(genotype.sizeXPectoralFin.phenotype*0.25+1, genotype.sizeYPectoralFin.phenotype*0.25+1, 1);
+		mesh.position.set(sizes[genotype.bodyModel.phenotype].x/2, 0, -sizes[genotype.bodyModel.phenotype].z/3);
+		group.add(mesh);
+	});
 
 	group.name = "fish";
 	return group;
@@ -561,8 +616,10 @@ function tournament(fishes) {
 	return fishes[minIndex];
 }
 
-/* return an array of indexes 
-numberOfFishes: length */
+/*
+return an array of indexes 
+numberOfFishes: length
+*/
 function selection(numberOfFishes) {
 	const selectionSize = getRandomInt(1, Math.ceil(numberOfFishes / 2)); // tiny selection
 	let selected = [];
@@ -585,7 +642,6 @@ function displayFish(genotype, x, y) {
 	let fish = create3DFish(genotype);
 	scene.add(fish);
 	//fish.rotation.set(0, Math.PI / 2, 0);
-	//fish.position.set(x - 350, 10 * y, -150);
 	fish.position.set(-150, 10 * y, x - 350);
 }
 
