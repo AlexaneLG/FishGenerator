@@ -1,5 +1,9 @@
 /* constants
 -------------------------------------------------------------*/
+let boid;
+let creatureMeshGroup = new THREE.Group();
+let creatureObjectGroup = new THREE.Group();
+
 const colorPalette = {
     screenBg: 0x041f60,
     containerBox: 0xffffff,
@@ -20,8 +24,10 @@ let options = {
   nFirstGen: 4,
   nChilds: 5,
   Generate: function() {
-    removeEntities('fish');
+    //removeEntities('fish');
     createAndDisplayFishes();
+    generateBoid();
+    
   }
 };
 
@@ -52,7 +58,8 @@ mtlLoader.load('models/fixed-scene.mtl', function ( materials ){
 				mesh.receiveShadow = true;
 				mesh.castShadow = true;
 				scene.add(mesh);
-				mesh.position.set(-200, -40, 0);
+				//mesh.position.set(-200, -40, 0);
+				mesh.position.set(0, -200, 10);
 				mesh.rotation.set(0, -Math.PI, 0);
 			}
 		);
@@ -65,11 +72,14 @@ let mixers = [];
 let clock = new THREE.Clock; 
 let jsonLoader = new THREE.JDLoader();
 
-loadSeaweed(-300, -35, 130, 0, Math.PI/2, 0);
-loadSeaweed(-250, -37, -150, 0, -Math.PI/3, 0);
+/*loadSeaweed(-300, -35, 130, 0, Math.PI/2, 0);
+loadSeaweed(-250, -37, -150, 0, -Math.PI/3, 0);*/
+loadSeaweed(-100, -195, 140, 0, Math.PI/2, 0);
+loadSeaweed(-50, -197, -140, 0, -Math.PI/3, 0);
 
 // set ocean
-let waterGeo = new THREE.PlaneGeometry(3000, 3000, 100, 100);
+const verticesSegments = 15;
+let waterGeo = new THREE.PlaneGeometry(490, 490, verticesSegments, verticesSegments);
 let waterMat = new THREE.MeshPhongMaterial({
   color: 0x00aeff,
   emissive: 0x0023b9,
@@ -106,7 +116,7 @@ const onResize = () => {
 let count = 0;
 let update = function () {
 	// game logic
-	//boids.update();
+	boid.update();
 
 	let delta = clock.getDelta();
 	for (let i = 0; i < mixers.length; ++i) {
@@ -115,8 +125,8 @@ let update = function () {
 
 	// animate ocean
 	let i = 0;
-	for (let ix = 0; ix < 100; ix++) {
-	    for (let iy = 0; iy < 100; iy++) {
+	for (let ix = 0; ix < verticesSegments; ix++) {
+	    for (let iy = 0; iy < verticesSegments; iy++) {
 	      waterObj.geometry.vertices[i++].z = Math.sin((ix + count) * 2) * 3 + Math.cos((iy + count) * 1.5) * 6;
 	      waterObj.geometry.verticesNeedUpdate = true;
 	    }
@@ -134,7 +144,7 @@ let GameLoop = function () {
 /* CLASSES
 -------------------------------------------------------------*/
 class BoxContainer {
-    constructor(width = 100, height = 100, depth = 100, color = 0xffffff) {
+    constructor(width = 480, height = 400, depth = 500, color = 0xffffff) {
         const geometry = new THREE.BoxGeometry(width, height, depth, 10, 10, 10);
         const material = new THREE.MeshLambertMaterial({
             color: color,
@@ -145,9 +155,11 @@ class BoxContainer {
             blending: THREE.AdditiveBlending
         });
         this.mesh = new THREE.Mesh(geometry, material);
+        /*this.mesh.position.x = -200;
+        this.mesh.position.z = -10;
+        this.mesh.position.y = 160;*/
     }
 }
-
 
 /* GENETIC ALGORITHM
 -------------------------------------------------------------*/
@@ -418,8 +430,6 @@ return Group of meshes / 3d objects
 function create3DFish(genotype){
 	let fishLoader = new THREE.OBJLoader();
 	let group = new THREE.Group();
-	//const colors = [0x1C77C3, 0x39A9DB, 0x40BCD8, 0xF39237, 0xE65F5C, 0x731DD8, 0x48A9A6, 0xE4DFDA];
-	//const colors = [0xc3c5b5, 0xc9c67c, 0x75b031, 0x31a372, 0x12929c, 0x4f39db, 0x834cd8, 0xb94ad6, 0xea3da5, 0xdf533a, 0xf66f13, 0xfd2d08, 0xfb9800, 0xf2db5c, 0xfff487, 0xf0ffb7];
 	const colors = [0x7dd0b6, 0x7dd0ca, 0x7dbdd0, 0x7da6d0, 0x7d88d0, 0xffd4f5, 0xE65F5C, 0xffddd4, 0xffe5d4, 0xffecd4, 0xfeffa7, 0xfeff86, 0xf6b6da, 0xfeffba, 0xffffe8, 0xF39237];
 	const bodyModels = ['models/fish-body-01.obj', 'models/fish-body-02.obj'];
 	const dorsalFinModels = ['models/dorsal-fin-01.obj', 'models/dorsal-fin-02.obj'];
@@ -529,6 +539,7 @@ function create3DFish(genotype){
 	});
 
 	group.name = "fish";
+	//group.scale.set(0.5, 0.5, 0.5); // change global size
 	return group;
 }
 
@@ -640,9 +651,12 @@ Display fish Object3D in the scene
 */
 function displayFish(genotype, x, y) {
 	let fish = create3DFish(genotype);
-	scene.add(fish);
+	/*scene.add(fish);
 	//fish.rotation.set(0, Math.PI / 2, 0);
-	fish.position.set(-150, 10 * y, x - 350);
+	fish.position.set(-150, 10 * y, x - 350);*/
+
+	// add fishes to boid group
+	creatureObjectGroup.add(fish);
 }
 
 /*
@@ -663,6 +677,10 @@ function removeEntities(name) {
 Apply genetic algorithm
 */
 function createAndDisplayFishes() {
+	scene.remove(creatureMeshGroup);
+	creatureMeshGroup = new THREE.Group();
+	creatureObjectGroup = new THREE.Group();
+
 	let nGen = 0; // index or number of the generation
 	let generations = []; // all fishes
 
@@ -738,7 +756,7 @@ function createAndDisplayFishes() {
 /* scene
 -------------------------------------------------------------*/
 let scene = new THREE.Scene();
-scene.fog = new THREE.Fog(colorPalette.screenBg, -30, 600);
+//scene.fog = new THREE.Fog(colorPalette.screenBg, -30, 600);
 
 /* camera
 -------------------------------------------------------------*/
@@ -759,7 +777,7 @@ document.body.appendChild(renderer.domElement);
 /* AmbientLight
 -------------------------------------------------------------*/
 var ambientLight = new THREE.AmbientLight( colorPalette.ambientLight, 1.0 );
-scene.add ( ambientLight );
+scene.add (ambientLight);
 
 /* SpotLight
 -------------------------------------------------------------*/
@@ -779,28 +797,41 @@ var pointLight = new THREE.PointLight( 0x174a84, 0.8, 18 );
 pointLight.position.set(0, 0, 0);
 pointLight.castShadow = true;
 pointLight.shadow.camera.near = 0.1;
-pointLight.shadow.camera.far = 25;
+pointLight.shadow.camera.far = 50; //25
 scene.add(pointLight);
 
 /* BoxContainer
 -------------------------------------------------------------*/
 const isLongSideWidth = window.innerWidth > window.innerHeight;
-const boxContainer = new BoxContainer(2300, 2300, 2300, colorPalette.boxContainer);
+const boxContainer = new BoxContainer(); // 2300, 2300, 2300, colorPalette.boxContainer
 scene.add(boxContainer.mesh);
 
 /* Ocean
 -------------------------------------------------------------*/
 let waterObj = new THREE.Mesh(waterGeo, waterMat);
 waterObj.rotation.x = -Math.PI / 2;
-waterObj.position.y = 150;
+/*waterObj.position.y = 355;
+waterObj.position.x = -205;
+waterObj.position.z = -5;*/
+waterObj.position.set(5, 195, 5);
 scene.add(waterObj);
+
+/* creature
+-------------------------------------------------------------*/
+const generateBoid = () => {
+    const creatures = [];
+    for (let i = 0; i < creatureObjectGroup.children.length; ++i) {
+        const creature = new Creature(creatureObjectGroup.children[i]);
+        creatureMeshGroup.add(creature.mesh);
+        creatures.push(creature);
+    }
+    boid = new Boid(creatures);
+    scene.add(creatureMeshGroup);
+}
 
 /* OrbitControls
 -------------------------------------------------------------*/
 const controls = new THREE.OrbitControls( camera, renderer.domElement );
-/*orbitControls.autoRotate = false;
-orbitControls.enableDamping = true;
-orbitControls.dampingFactor = 0.39;*/
 
 /* resize
 -------------------------------------------------------------*/
@@ -809,6 +840,7 @@ window.addEventListener( 'resize', onResize );
 /* rendering start
 -------------------------------------------------------------*/
 createAndDisplayFishes();
+generateBoid();
 GameLoop();
 
 /* decors functions
